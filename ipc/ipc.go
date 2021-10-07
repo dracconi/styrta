@@ -1,8 +1,8 @@
 package ipc
 
 import (
-"sync/atomic"
-"sync"
+	"sync"
+	"sync/atomic"
 )
 
 // Erlang-like IPC
@@ -20,14 +20,14 @@ type MsgBody interface {
 }
 
 type Message struct {
-	Id uint32
+	Id   uint32
 	From Pid
-	To Pid
+	To   Pid
 	Body MsgBody
 }
 
 type node struct {
-	pid Pid
+	pid           Pid
 	inbox, outbox chan Message
 }
 

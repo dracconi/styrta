@@ -1,7 +1,8 @@
 package ipc
 
 import (
-"sync" )
+	"sync"
+)
 
 // Registry for the IPC.
 
@@ -16,7 +17,7 @@ func Register(pid Pid, name string) bool {
 	mnames.Lock()
 	defer mnames.Unlock()
 	if _, ok := names[name]; ok {
-	return true
+		return true
 	}
 
 	names[name] = pid

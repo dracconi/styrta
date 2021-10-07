@@ -5,9 +5,11 @@ package ipc
 
 func postman(n *node) {
 	for {
-	msg := <-(n.outbox)
-	to, ok := nodes[msg.To]
-	if !ok { continue }
-	to.inbox<-msg
+		msg := <-(n.outbox)
+		to, ok := nodes[msg.To]
+		if !ok {
+			continue
+		}
+		to.inbox <- msg
 	}
 }

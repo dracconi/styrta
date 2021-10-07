@@ -1,11 +1,12 @@
 package ipc
 
 import (
-"testing"
-"math/rand"
+	"math/rand"
+	"testing"
 )
 
-type TMessage struct {}
+type TMessage struct{}
+
 func (t TMessage) Typ() MsgTyp {
 	return 99
 }
@@ -36,11 +37,11 @@ func TestPostman(t *testing.T) {
 	Add(p, i, o)
 	q, j, a := Make()
 	Add(q, j, a)
-	if (q == p) {
+	if q == p {
 		t.Errorf("collision pid")
 	}
 	m := Message{1, p, q, TMessage{}}
-	o<-m
+	o <- m
 	if m != <-j {
 		t.Errorf("msg not passed")
 	}
