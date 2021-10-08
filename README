@@ -1,0 +1,8 @@
+styrta
+=====
+
+styrta (pol. stack) is a proof-of-concept blockchain written in golang based on the proof-of-stake consensus mechanism.
+
+1. consensus
+-----------
+A block gets taken into a node, if it is signed by nodes, that, for the state of the previous block, hold at least 50% of global supply.
