@@ -7,12 +7,8 @@ import (
 
 type TMessage struct{}
 
-func (t TMessage) Typ() MsgTyp {
-	return 99
-}
-
 func TestAdd(t *testing.T) {
-	IPCInitialize()
+	Initialize()
 	p, i, o := Make()
 	if Add(p, i, o) == true {
 		t.Errorf("wanted false")
@@ -32,7 +28,7 @@ func TestRegistry(t *testing.T) {
 }
 
 func TestPostman(t *testing.T) {
-	IPCInitialize()
+	Initialize()
 	p, i, o := Make()
 	Add(p, i, o)
 	q, j, a := Make()
@@ -44,5 +40,10 @@ func TestPostman(t *testing.T) {
 	o <- m
 	if m != <-j {
 		t.Errorf("msg not passed")
+	}
+
+	o <- Message{0, 0, 0, MsgDie{}}
+	if (Message{0, 0, 0, MsgDie{}}) != <-i {
+		t.Errorf("death not caught")
 	}
 }

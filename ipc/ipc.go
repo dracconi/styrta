@@ -15,9 +15,9 @@ type Pid uint32
 
 type MsgTyp uint16
 
-type MsgBody interface {
-	Typ() MsgTyp
-}
+type MsgBody interface {}
+
+type MsgDie struct {}
 
 type Message struct {
 	Id   uint32
@@ -26,6 +26,8 @@ type Message struct {
 	Body MsgBody
 }
 
+type POBox chan Message
+
 type node struct {
 	pid           Pid
 	inbox, outbox chan Message
@@ -33,9 +35,9 @@ type node struct {
 
 var mnodes sync.Mutex
 var nodes map[Pid]node
-var last_pid Pid = 0
+var last_pid Pid = 1
 
-func IPCInitialize() {
+func Initialize() {
 	nodes = make(map[Pid]node)
 	RegistryInitialize()
 }
@@ -58,4 +60,11 @@ func Add(pid Pid, inbox, outbox chan Message) bool {
 	go postman(&(v))
 
 	return false
+}
+
+func Start(f func(Pid, POBox, POBox)) Pid {
+	p, i, o := Make()
+	Add(p, i, o)
+	go f(p, i, o)
+	return p
 }
