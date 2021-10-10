@@ -1,0 +1,104 @@
+General assumptions
+=============
+
+It is an extension to the IPC in ../ipc/.
+
+Each message contains an Id, From and To fields, and the Body.
+
+Id is for making sure, that the messages are not retransmitted endlessly
+-- if a node has already seen that message, it gets ignored.
+
+From and To field take two forms:
+- if the message is transmitted over the internet, it becomes the IP of the Origin/Dest node.
+Note that Origin does not change after a retransmission. Effectively it is the IP of the very first node, one that initiated the message.
+
+- otherwise it just becomes local Pid
+
+
+Message serialization
+-----------------
+
+A message is serialized in the following way:
+
+Note that all numbers are little endian.
+
+ Id	From	To	Type		Serialized body...
+ 32	32	32	16		...
+
+
+Some primitives
+-------------
+
+Array:
+
+ N	el 0	el 1	el 2	... 	el N
+ 16	x	x	x	...	x
+
+
+Specific messages
+--------------
+
+# Hello
+ Version	Date
+ 8		32
+
+# Add Peer
+ n	string
+ 32	n*8
+
+# Tx
+ TxN	From	To	Amount	Gas	Signature [TxN, From, To, Amount, Gas]
+ 64	64	64	64	64	64
+
+# Block
+ BlockN	Array [Signers, Stake, Signature]	Array [Tx]
+ 64	x				x
+
+# Proof
+ ProofN	Signer	Stake	Array[Tx]	Signature
+ 64		64	64		x		64
+
+
+Proofing scheme
+-------------
+
+# Connection with a peer
+initialize connection -> "Hello" -> exchange peers by "Add Peer" ------\
+						^----------------------/
+
+
+# Exchange transactions
+A node sends a "Tx" to another node. Then it floods to other nodes, if the signature is correct.
+They are also added to the local db.
+
+# Prime proof
+A node has accumulated some Txs now (a set number Tth or a Tt time has elapsed).
+It makes a proof with those and then sends them out to the network.
+The node also keeps a cache of the last block account states.
+Other nodes, when receiving the proof, note it down in their db,
+also adding transactions not yet existing in their db. Of course, a signature check preceeds that.
+Each transaction has its % of stake verified associated, that also is associated with specific pubkeys
+and hence specific nodes that verified it.
+
+# Committee and proof
+If a substantial amount (a set number Tth or a Tt time has elapsed) of Txs with over 50% stake
+(50% of whole chain coins has been staked on the verification), then the nodes start to form a committee, that will deliver a final proof.
+All the nodes that commited to that 50% of stake, are now connected directly, and they exchange the transactions for proofing.
+
+The committee forming looks like that:
+A node notices that the condition has been filled.
+It invites all other nodes who contributed to the 50%+1 to join its committee.
+If another node invites the inviting node at the time of inviting other nodes,
+then the node A accepts the invite and also invites all the other nodes to join them.
+So all nodes in the committee would have a database of all nodes participating.
+
+After all of the connections have been formed (at least 1 connection to every member), the committee is closed.
+
+Each node then sends all of their 50%+1 transactions to the committee. If, after some time, there is some nodes that
+did not send a transactions declaration, there is a question sent to every node, whether they have seen that node or something like that.
+If no response is received, this node is removed from the committee. This kind of message is unique, and if some node has alread
+asked about another node, then the question is not asked again. I.e. the retransmission happens on the basis of the message content.
+
+Each node then sorts the transactions, verifies them and signs them, then announces them back. The most predominant block is then announced
+with the signatures of the committee to the network. Committee is destroyed.
+
