@@ -62,9 +62,9 @@ func Add(pid Pid, inbox, outbox chan Message) bool {
 	return false
 }
 
-func Start(f func(Pid, POBox, POBox)) Pid {
+func Start(f func(Pid, POBox, POBox, []interface{}), w ...interface{}) Pid {
 	p, i, o := Make()
 	Add(p, i, o)
-	go f(p, i, o)
+	go f(p, i, o, w)
 	return p
 }

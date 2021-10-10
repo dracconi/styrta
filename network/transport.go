@@ -3,7 +3,6 @@ package network
 import (
 "github.com/dracconi/styrta/ipc"
 "bytes"
-"time"
 "reflect"
 )
 
@@ -27,14 +26,14 @@ func toaUint32(u uint32) []byte {
 }
 
 type MsgHello struct {
-	version int8
-	date uint32
+	Version int8
+	Date uint32
 }
 
 func parseBody(b []byte) ipc.MsgBody {
 	switch int(b[0]) {
 		case tHello:
-			return MsgHello{int8(b[1]), atoUint32(b[1:5])}
+			return MsgHello{int8(b[1]), atoUint32(b[2:6])}
 		case tAddPeer:
 			n := atoUint32(b[1:5])
 			return MsgAdd{string(b[5:5+n])}
@@ -46,7 +45,7 @@ func parseBody(b []byte) ipc.MsgBody {
 func serializeBody(m ipc.MsgBody) []byte {
 	switch reflect.TypeOf(m).String() {
 		case "network.MsgHello":
-			return append([]byte{tHello}, toaUint32(uint32(time.Now().UnixMilli()))...)
+			return append(append([]byte{tHello}, byte(m.(MsgHello).Version)), toaUint32(uint32(m.(MsgHello).Date))...)
 		case "network.MsgAdd":
 			addr := m.(MsgAdd).address
 			return append([]byte{tAddPeer}, append(toaUint32(uint32(len(addr))), []byte(addr)...)...)
@@ -63,7 +62,7 @@ func parseMsg(b []byte) ipc.Message {
 	m.Id = atoUint32(b[0:4])
 	m.From = ipc.Pid(atoUint32(b[4:8]))
 	m.To = ipc.Pid(atoUint32(b[8:12]))
-	m.Body = parseBody(b[12:])
+	m.Body = parseBody(b[12:len(b)-1])
 	return m
 }
 
@@ -74,5 +73,6 @@ func serializeMsg(m ipc.Message) []byte {
 	buf.Write(toaUint32(uint32(m.From)))
 	buf.Write(toaUint32(uint32(m.To)))
 	buf.Write(serializeBody(m.Body))
+	buf.Write([]byte{'\n'})
 	return buf.Bytes()
 }
